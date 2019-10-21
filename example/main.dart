@@ -1,4 +1,4 @@
-import 'package:json_patch/json_patch.dart';
+import 'package:json_patch/json_patch';
 
 void main() {
   final diff = JsonPatch.diff(
@@ -19,20 +19,24 @@ void main() {
   );
   print('Diff algorithm found changes: $diff');
 
-  final newJson = JsonPatch.apply(
-    {
-      'a': 5,
-    },
-    [
-      {'op': 'test', 'path': '/a', 'value': 5},
+  try {
+    final newJson = JsonPatch.apply(
       {
-        'op': 'add',
-        'path': '/test',
-        'value': {'child': 'value'}
+        'a': 5,
       },
-      {'op': 'move', 'from': '/test', 'to': '/moved'},
-    ],
-    strict: true,
-  );
-  print('Object after applying patch operations: $newJson');
+      [
+        {'op': 'test', 'path': '/a', 'value': 5},
+        {
+          'op': 'add',
+          'path': '/test',
+          'value': {'child': 'value'}
+        },
+        {'op': 'move', 'from': '/test', 'to': '/moved'},
+      ],
+      strict: true,
+    );
+    print('Object after applying patch operations: $newJson');
+  } on JsonPatchTestFailedException catch (e) {
+    print(e);
+  }
 }
