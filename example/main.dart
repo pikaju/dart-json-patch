@@ -1,4 +1,4 @@
-import 'package:json_patch/json_patch';
+import 'package:json_patch/json_patch.dart';
 
 void main() {
   final diff = JsonPatch.diff(
