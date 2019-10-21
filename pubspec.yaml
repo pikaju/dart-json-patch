@@ -1,15 +1,14 @@
 name: json_patch
 description: Pure Dart utility package for the JSON Patch standard.
 version: 1.0.0
-
 author: Julien Scholz <julienscholzo@hotmail.de>
-repository: https://github.com/Pikaju/DartJsonPatch
+homepage: https://github.com/Pikaju/DartJsonPatch
 
 environment:
   sdk: ">=2.0.0 <3.0.0"
 
 dependencies:
-  collection: any
+  collection: ^1.14.12
 
 dev_dependencies:
   test: any
