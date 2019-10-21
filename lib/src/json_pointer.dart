@@ -6,8 +6,9 @@ class JsonPointer {
   const JsonPointer.fromSegments(this.segments) : assert(segments != null);
 
   factory JsonPointer.fromString(String pointer) {
-    if (!(pointer.isEmpty || pointer.startsWith('/')))
+    if (!(pointer.isEmpty || pointer.startsWith('/'))) {
       throw JsonPatchError('Invalid JSON Pointer: "$pointer".');
+    }
 
     return JsonPointer.fromSegments(pointer
         .split('/')
@@ -39,9 +40,10 @@ class JsonPointer {
     dynamic current = json;
     for (final segment in segments) {
       if (current is Map<String, dynamic>) {
-        if (!current.containsKey(segment))
+        if (!current.containsKey(segment)) {
           throw JsonPatchError(
               'Argument $json does not contain value at $this');
+        }
         current = current[segment];
       } else if (current is List) {
         try {
@@ -50,8 +52,9 @@ class JsonPointer {
           throw JsonPatchError(
               'Argument $json does not contain value at $this');
         }
-      } else
+      } else {
         throw JsonPatchError('Argument $json does not contain value at $this');
+      }
     }
     return current;
   }

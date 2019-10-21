@@ -17,21 +17,26 @@ class JsonPatch {
   static List<Map<String, dynamic>> diff(dynamic oldJson, dynamic newJson) {
     try {
       // If both objects are null, no patch is required.
-      if (oldJson == null && newJson == null) return [];
+      if (oldJson == null && newJson == null) {
+        return [];
+      }
 
       // If the object was either null before or set to null now, replace the value.
-      if (oldJson == null || newJson == null)
+      if (oldJson == null || newJson == null) {
         return [
           {'op': 'replace', 'path': '', 'value': newJson}
         ];
+      }
 
       // If the parameters are Maps, call the specialized function for objects.
-      if (oldJson is Map<String, dynamic> && newJson is Map<String, dynamic>)
+      if (oldJson is Map<String, dynamic> && newJson is Map<String, dynamic>) {
         return _objectDiff(oldJson, newJson);
+      }
 
       // If the parameters are List, call the specialized function for lists.
-      if (oldJson is List && newJson is List)
+      if (oldJson is List && newJson is List) {
         return _listDiff(oldJson, newJson);
+      }
 
       // If the runtime type changed, replace the value.
       if (oldJson.runtimeType != newJson.runtimeType) {
@@ -41,10 +46,11 @@ class JsonPatch {
       }
 
       // For primitive types, use the == operator for comparisson and replace if necessary.
-      if (oldJson != newJson)
+      if (oldJson != newJson) {
         return [
           {'op': 'replace', 'path': '', 'value': newJson}
         ];
+      }
 
       // No difference found.
       return [];
@@ -105,11 +111,11 @@ class JsonPatch {
 
   static List<Map<String, dynamic>> _listDiff(List oldJson, List newJson) {
     // Always replace lists if the size changed (not optimal).
-    if (oldJson.length != newJson.length)
+    if (oldJson.length != newJson.length) {
       return [
         {'op': 'replace', 'path': '', 'value': newJson}
       ];
-    else {
+    } else {
       final result = <Map<String, dynamic>>[];
       for (int i = 0; i < oldJson.length; i++) {
         final elementPatches = diff(oldJson[i], newJson[i]);
@@ -219,8 +225,9 @@ class JsonPatch {
         final path = _extractPath(patch);
         final desiredValue = _extractValue(patch);
         final actualValue = path.traverse(json);
-        if (!const DeepCollectionEquality().equals(desiredValue, actualValue))
+        if (!const DeepCollectionEquality().equals(desiredValue, actualValue)) {
           throw JsonPatchTestFailedException(patch);
+        }
         return fakeParent[fakeChild];
       default:
         throw JsonPatchError('Invalid JSON Patch operation: "$op".');
@@ -229,17 +236,20 @@ class JsonPatch {
 
   static JsonPointer _extractPath(Map<String, dynamic> patch,
       [String name = 'path']) {
-    if (!patch.containsKey(name))
+    if (!patch.containsKey(name)) {
       throw JsonPatchError('Patch field "$name" is missing.');
-    if (patch[name] == null || patch[name] is! String)
+    }
+    if (patch[name] == null || patch[name] is! String) {
       throw JsonPatchError('Invalid path "${patch[name]}".');
+    }
     return JsonPointer.fromString(patch[name]);
   }
 
   static dynamic _extractValue(Map<String, dynamic> patch,
       [String name = 'value']) {
-    if (!patch.containsKey(name))
+    if (!patch.containsKey(name)) {
       throw JsonPatchError('Patch field "$name" is missing.');
+    }
     return patch[name];
   }
 
@@ -248,9 +258,10 @@ class JsonPatch {
     final parent = pointer.parent.traverse(json);
     final child = pointer.segments.last;
     if (parent is Map<String, dynamic>) {
-      if (parent.containsKey(child) && strict)
+      if (parent.containsKey(child) && strict) {
         throw JsonPatchError(
             'Tried to add value that already exists. Set strict to false to allow this. $json $pointer $parent $child');
+      }
       parent[child] = value;
     } else if (parent is List) {
       if (child == '-') {
@@ -262,8 +273,9 @@ class JsonPatch {
         } catch (e) {
           throw JsonPatchError('Could not parse array index "$child".');
         }
-        if (index < 0 || index > parent.length)
+        if (index < 0 || index > parent.length) {
           throw JsonPatchError('Array index out of bounds.');
+        }
         parent.insert(index, value);
       }
     } else {
@@ -276,9 +288,10 @@ class JsonPatch {
     final parent = pointer.parent.traverse(json);
     final child = pointer.segments.last;
     if (parent is Map<String, dynamic>) {
-      if (!parent.containsKey(child) && strict)
+      if (!parent.containsKey(child) && strict) {
         throw JsonPatchError(
             'Tried to remove child that does not exist. Set strict to false to allow this.');
+      }
       parent.remove(child);
     } else if (parent is List) {
       int index;
@@ -287,9 +300,10 @@ class JsonPatch {
       } catch (e) {
         throw JsonPatchError('Could not parse array index "$child".');
       }
-      if ((index < 0 || index >= parent.length) && strict)
+      if ((index < 0 || index >= parent.length) && strict) {
         throw JsonPatchError(
             'Tried to remove out of bounds array index. Set strict to false to allow this.');
+      }
       parent.removeAt(index);
     } else {
       throw JsonPatchError(
