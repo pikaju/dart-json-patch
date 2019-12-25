@@ -1,3 +1,7 @@
+## 2.0.0
+
+* Fix warnings (requires Dart 2.2)
+
 ## 1.0.2
 
 * Loosen dependency version constraints

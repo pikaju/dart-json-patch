@@ -64,18 +64,18 @@ class JsonPatch {
     final patches = <Map<String, dynamic>>[];
 
     // Find all child names.
-    final children = Set<String>();
+    final children = <String>{};
     children.addAll(oldJson.keys);
     children.addAll(newJson.keys);
 
-    for (String child in children) {
+    for (final child in children) {
       final childPointer = JsonPointer.fromSegments([child]);
       // If both objects contain the same child, perform diff on them.
       if (oldJson.containsKey(child) && newJson.containsKey(child)) {
         final childPatches = diff(oldJson[child], newJson[child]);
         // Put the child name in front of the paths.
         patches.addAll(childPatches.map((Map<String, dynamic> childPatch) {
-          String path = childPatch['path'];
+          final path = childPatch['path'] as String;
           final copy = Map<String, dynamic>.from(childPatch);
           copy['path'] = JsonPointer.join(
             childPointer,
@@ -117,11 +117,11 @@ class JsonPatch {
       ];
     } else {
       final result = <Map<String, dynamic>>[];
-      for (int i = 0; i < oldJson.length; i++) {
+      for (var i = 0; i < oldJson.length; i++) {
         final elementPatches = diff(oldJson[i], newJson[i]);
         // Put the list index in front of each path.
         result.addAll(elementPatches.map((Map<String, dynamic> elementPatch) {
-          String path = elementPatch['path'];
+          final path = elementPatch['path'] as String;
           final copy = Map<String, dynamic>.from(elementPatch);
           copy['path'] = JsonPointer.join(
             JsonPointer.fromSegments([i.toString()]),
@@ -178,7 +178,7 @@ class JsonPatch {
     final op = patch['op'];
 
     // Create fake parent to easily allow changes to the root object.
-    const String fakeChild = 'child';
+    const fakeChild = 'child';
     final fakeParent = {fakeChild: json};
 
     switch (op) {
