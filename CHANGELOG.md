@@ -1,3 +1,8 @@
+## 2.0.1
+
+* Fix patch operation parameter sometimes being modified
+* Update repository URL
+
 ## 2.0.0
 
 * Fix warnings (requires Dart 2.2)

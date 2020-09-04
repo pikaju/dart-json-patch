@@ -306,5 +306,24 @@ void main() {
             ]
           })));
     });
+
+    test('.apply does not modify the patch operation lists', () {
+      final value = [];
+      final operations = [
+        {'op': 'add', 'path': '/list', 'value': value},
+        {'op': 'add', 'path': '/list/-', 'value': 5},
+      ];
+      JsonPatch.apply({}, operations);
+      expect(value, isEmpty);
+    });
+    test('.apply does not modify the patch operation object', () {
+      final value = <String, dynamic>{};
+      final operations = [
+        {'op': 'add', 'path': '/obj', 'value': value},
+        {'op': 'add', 'path': '/obj/test', 'value': 5},
+      ];
+      JsonPatch.apply({}, operations);
+      expect(value, isEmpty);
+    });
   });
 }

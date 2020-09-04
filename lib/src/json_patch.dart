@@ -255,6 +255,9 @@ class JsonPatch {
 
   static void _addChild(
       dynamic json, JsonPointer pointer, dynamic value, bool strict) {
+    // Deep copy the value so patch operations don't get modified.
+    value = _deepCopy(value);
+
     final parent = pointer.parent.traverse(json);
     final child = pointer.segments.last;
     if (parent is Map<String, dynamic>) {
