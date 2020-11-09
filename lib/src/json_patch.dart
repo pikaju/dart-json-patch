@@ -1,9 +1,11 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:json_patch/src/list_edit_matrix.dart';
 
 import 'error.dart';
 import 'json_pointer.dart';
+import 'list_edit_matrix.dart';
 
 /// Utility class for JSON Patch operations.
 /// Can compare JSON objects or apply patches to an object.
@@ -45,7 +47,7 @@ class JsonPatch {
         ];
       }
 
-      // For primitive types, use the == operator for comparisson and replace if necessary.
+      // For primitive types, use the == operator for comparison and replace if necessary.
       if (oldJson != newJson) {
         return [
           {'op': 'replace', 'path': '', 'value': newJson}
@@ -109,29 +111,68 @@ class JsonPatch {
     return patches;
   }
 
-  static List<Map<String, dynamic>> _listDiff(List oldJson, List newJson) {
-    // Always replace lists if the size changed (not optimal).
-    if (oldJson.length != newJson.length) {
-      return [
-        {'op': 'replace', 'path': '', 'value': newJson}
-      ];
-    } else {
-      final result = <Map<String, dynamic>>[];
-      for (var i = 0; i < oldJson.length; i++) {
-        final elementPatches = diff(oldJson[i], newJson[i]);
-        // Put the list index in front of each path.
-        result.addAll(elementPatches.map((Map<String, dynamic> elementPatch) {
-          final path = elementPatch['path'] as String;
-          final copy = Map<String, dynamic>.from(elementPatch);
-          copy['path'] = JsonPointer.join(
-            JsonPointer.fromSegments([i.toString()]),
-            JsonPointer.fromString(path),
-          ).toString();
-          return copy;
-        }));
+  static List _listDiff(List oldList, List newList) {
+    final editMatrix = ListEditMatrix.buildEditMatrix(oldList, newList, _equal);
+    var result = <Map<String, dynamic>>[];
+
+    var currentX = newList.length;
+    var currentY = oldList.length;
+    var oldLength = oldList.length;
+
+    // Reverse through the matrix adding patches to the result where necessary
+    while (currentX > 0 || currentY > 0) {
+      final editType = editMatrix[currentY][currentX];
+      if (editType == EditType.replace) {
+        result.addAll(appendIndexToPath(
+            diff(oldList[currentY - 1], newList[currentX - 1]), currentY - 1));
+        currentX--;
+        currentY--;
+      } else if (editType == EditType.remove) {
+        result.add({'op': 'remove', 'path': '/${currentY - 1}'});
+        currentY--;
+      } else if (editType == EditType.add) {
+        result.add({
+          'op': 'add',
+          'path': '/${currentY >= oldLength ? '-' : currentY}',
+          'value': newList[currentX - 1]
+        });
+        currentX--;
+        oldLength++;
+      } else {
+        currentX--;
+        currentY--;
       }
-      return result;
     }
+
+    return result;
+  }
+
+  static bool _equal(e, Object element) {
+    if (e is Map<String, dynamic> &&
+        element is Map<String, dynamic> &&
+        MapEquality().equals(e, element)) {
+      return true;
+    } else if (e is List &&
+        element is List &&
+        ListEquality().equals(e, element)) {
+      return true;
+    } else if (e == element) {
+      return true;
+    }
+    return false;
+  }
+
+  static Iterable<Map<String, dynamic>> appendIndexToPath(
+      List<Map<String, dynamic>> elementPatches, int index) {
+    return elementPatches.map((Map<String, dynamic> elementPatch) {
+      final path = elementPatch['path'] as String;
+      final copy = Map<String, dynamic>.from(elementPatch);
+      copy['path'] = JsonPointer.join(
+        JsonPointer.fromSegments([index.toString()]),
+        JsonPointer.fromString(path),
+      ).toString();
+      return copy;
+    });
   }
 
   /// Applies JSON Patch operations to a JSON-like object.
