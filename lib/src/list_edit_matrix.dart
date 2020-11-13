@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
+
 /// Utility class for diffing lists using the Wagner–Fischer algorithm.
 /// It creates a matrix of operations which need to be applied to the old list
 /// to recreate the new one.
@@ -25,9 +27,13 @@ class ListEditMatrix {
       diffMatrix[0][i] = EditType.add;
     }
 
+    final oldHashList = oldList.map(DeepCollectionEquality().hash).toList();
+    final newHashList = newList.map(DeepCollectionEquality().hash).toList();
+
     for (var i = 1; i < oldLength + 1; i++) {
       for (var j = 1; j < newLength + 1; j++) {
-        var same = equal(oldList[i - 1], newList[j - 1]);
+        final same = oldHashList[i - 1] == newHashList[j - 1] &&
+            equal(oldList[i - 1], newList[j - 1]);
         final substitutionCost = same ? 0 : 1;
 
         final replaceValue = distanceMatrix[i - 1][j - 1] + substitutionCost;

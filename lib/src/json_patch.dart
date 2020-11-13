@@ -111,30 +111,44 @@ class JsonPatch {
     return patches;
   }
 
-  static List _listDiff(List oldList, List newList) {
-    final editMatrix = ListEditMatrix.buildEditMatrix(oldList, newList, _equal);
+  static List<Map<String, dynamic>> _listDiff(List oldList, List newList) {
+    final startInd = _getCommonPrefix(newList, oldList);
+
+    if (startInd == newList.length && newList.length == oldList.length) {
+      return [];
+    }
+
+    final endInd =
+        _getCommonPrefix(newList.reversed.toList(), oldList.reversed.toList());
+
+    var oldListTrimmed = oldList.sublist(startInd, oldList.length - endInd);
+    var newListTrimmed = newList.sublist(startInd, newList.length - endInd);
+    final editMatrix =
+        ListEditMatrix.buildEditMatrix(oldListTrimmed, newListTrimmed, _equal);
+
     var result = <Map<String, dynamic>>[];
 
-    var currentX = newList.length;
-    var currentY = oldList.length;
-    var oldLength = oldList.length;
+    var currentX = newListTrimmed.length;
+    var currentY = oldListTrimmed.length;
+    var oldLength = currentY + endInd;
 
     // Reverse through the matrix adding patches to the result where necessary
     while (currentX > 0 || currentY > 0) {
       final editType = editMatrix[currentY][currentX];
       if (editType == EditType.replace) {
         result.addAll(appendIndexToPath(
-            diff(oldList[currentY - 1], newList[currentX - 1]), currentY - 1));
+            diff(oldListTrimmed[currentY - 1], newListTrimmed[currentX - 1]),
+            currentY + startInd - 1));
         currentX--;
         currentY--;
       } else if (editType == EditType.remove) {
-        result.add({'op': 'remove', 'path': '/${currentY - 1}'});
+        result.add({'op': 'remove', 'path': '/${currentY + startInd - 1}'});
         currentY--;
       } else if (editType == EditType.add) {
         result.add({
           'op': 'add',
-          'path': '/${currentY >= oldLength ? '-' : currentY}',
-          'value': newList[currentX - 1]
+          'path': '/${currentY >= oldLength ? '-' : currentY + startInd}',
+          'value': newListTrimmed[currentX - 1]
         });
         currentX--;
         oldLength++;
@@ -147,20 +161,20 @@ class JsonPatch {
     return result;
   }
 
-  static bool _equal(e, Object element) {
-    if (e is Map<String, dynamic> &&
-        element is Map<String, dynamic> &&
-        MapEquality().equals(e, element)) {
-      return true;
-    } else if (e is List &&
-        element is List &&
-        ListEquality().equals(e, element)) {
-      return true;
-    } else if (e == element) {
-      return true;
+  static int _getCommonPrefix(List newList, List oldList) {
+    var startInd = 0;
+    final newLen = newList.length;
+    final oldLen = oldList.length;
+    while (startInd < oldLen &&
+        startInd < newLen &&
+        _equal(newList[startInd], oldList[startInd])) {
+      startInd++;
     }
-    return false;
+    return startInd;
   }
+
+  static bool _equal(e, Object element) =>
+      DeepCollectionEquality().equals(e, element);
 
   static Iterable<Map<String, dynamic>> appendIndexToPath(
       List<Map<String, dynamic>> elementPatches, int index) {

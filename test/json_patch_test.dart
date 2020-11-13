@@ -228,21 +228,44 @@ void main() {
       expect(removeResult, hasLength(1));
       _checkPatch(removeResult[0], 'remove', '/0');
     });
-  });
 
-  test('.diff should be able to compare maps and lists', () {
-    final oldJson = [
-      1,
-      {'value': 1},
-      [1, 2, 3]
-    ];
-    final newJson = [
-      {'value': 1},
-      [1, 2, 3]
-    ];
-    final result = JsonPatch.diff(oldJson, newJson);
-    expect(result, hasLength(1));
-    _checkPatch(result[0], 'remove', '/0');
+    test('.diff should be able to compare maps and lists', () {
+      final oldJson = [
+        1,
+        {'value': 1},
+        [1, 2, 3]
+      ];
+      final newJson = [
+        {'value': 1},
+        [1, 2, 3]
+      ];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(1));
+      _checkPatch(result[0], 'remove', '/0');
+    });
+
+    test('.diff should handle a shared prefix and suffix', () {
+      final oldJson = [1, 2, 3, 4, 5];
+      final newJson = [1, 2, 6, 4, 5];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(1));
+      _checkPatch(result[0], 'replace', '/2', value: 6);
+    });
+
+    test('.diff should handle a removing from a list with a common suffix', () {
+      final oldJson = [1, 2, 3, 4, 5];
+      final newJson = [1, 2, 4, 5];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(1));
+      _checkPatch(result[0], 'remove', '/2');
+    });
+
+    test('.diff should handle a equal lists', () {
+      final oldJson = [1, 2, 3, 4, 5];
+      final newJson = [1, 2, 3, 4, 5];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, isEmpty);
+    });
   });
 
   group('.apply', () {
