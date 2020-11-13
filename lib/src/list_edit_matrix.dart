@@ -10,8 +10,8 @@ enum EditType { add, remove, replace, noop }
 class ListEditMatrix {
   static List<List<EditType>> buildEditMatrix<T>(
       List<T> oldList, List<T> newList, bool Function(T, T) equal) {
-    var oldLength = oldList.length;
-    var newLength = newList.length;
+    final oldLength = oldList.length;
+    final newLength = newList.length;
     final distanceMatrix = List.generate(
         oldLength + 1, (index) => List.generate(newLength + 1, (index) => 0));
     final diffMatrix = List.generate(oldLength + 1,

@@ -112,25 +112,28 @@ class JsonPatch {
   }
 
   static List<Map<String, dynamic>> _listDiff(List oldList, List newList) {
-    final startInd = _getCommonPrefix(newList, oldList);
+    final commonPrefixLength = _getCommonPrefix(newList, oldList);
 
-    if (startInd == newList.length && newList.length == oldList.length) {
+    if (commonPrefixLength == newList.length &&
+        newList.length == oldList.length) {
       return [];
     }
 
-    final endInd =
+    final commonSuffixLength =
         _getCommonPrefix(newList.reversed.toList(), oldList.reversed.toList());
 
-    var oldListTrimmed = oldList.sublist(startInd, oldList.length - endInd);
-    var newListTrimmed = newList.sublist(startInd, newList.length - endInd);
+    final oldListTrimmed = oldList.sublist(
+        commonPrefixLength, oldList.length - commonSuffixLength);
+    final newListTrimmed = newList.sublist(
+        commonPrefixLength, newList.length - commonSuffixLength);
     final editMatrix =
         ListEditMatrix.buildEditMatrix(oldListTrimmed, newListTrimmed, _equal);
 
-    var result = <Map<String, dynamic>>[];
+    final result = <Map<String, dynamic>>[];
 
     var currentX = newListTrimmed.length;
     var currentY = oldListTrimmed.length;
-    var oldLength = currentY + endInd;
+    var oldLength = currentY + commonSuffixLength;
 
     // Reverse through the matrix adding patches to the result where necessary
     while (currentX > 0 || currentY > 0) {
@@ -138,16 +141,18 @@ class JsonPatch {
       if (editType == EditType.replace) {
         result.addAll(appendIndexToPath(
             diff(oldListTrimmed[currentY - 1], newListTrimmed[currentX - 1]),
-            currentY + startInd - 1));
+            currentY + commonPrefixLength - 1));
         currentX--;
         currentY--;
       } else if (editType == EditType.remove) {
-        result.add({'op': 'remove', 'path': '/${currentY + startInd - 1}'});
+        result.add(
+            {'op': 'remove', 'path': '/${currentY + commonPrefixLength - 1}'});
         currentY--;
       } else if (editType == EditType.add) {
         result.add({
           'op': 'add',
-          'path': '/${currentY >= oldLength ? '-' : currentY + startInd}',
+          'path':
+              '/${currentY >= oldLength ? '-' : currentY + commonPrefixLength}',
           'value': newListTrimmed[currentX - 1]
         });
         currentX--;
