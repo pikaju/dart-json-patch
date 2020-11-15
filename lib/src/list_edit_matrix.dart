@@ -2,11 +2,11 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 
+enum EditType { add, remove, replace, noop }
+
 /// Utility class for diffing lists using the Wagner–Fischer algorithm.
 /// It creates a matrix of operations which need to be applied to the old list
 /// to recreate the new one.
-enum EditType { add, remove, replace, noop }
-
 class ListEditMatrix {
   static List<List<EditType>> buildEditMatrix<T>(
       List<T> oldList, List<T> newList, bool Function(T, T) equal) {

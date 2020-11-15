@@ -4,7 +4,7 @@ import 'package:json_patch/json_patch.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('.diff', () {
+  group('JsonPatch', () {
     test('.diff does not patch unchanged JSON', () {
       final json = {
         'object': {'test': 123, 'anotherTest': true, 'nested': {}},
@@ -266,9 +266,7 @@ void main() {
       final result = JsonPatch.diff(oldJson, newJson);
       expect(result, isEmpty);
     });
-  });
 
-  group('.apply', () {
     test('.apply works for add operations', () {
       final result = JsonPatch.apply({
         'object': {}

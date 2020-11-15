@@ -3,8 +3,8 @@ import 'package:json_patch/src/list_edit_matrix.dart';
 import 'package:test/test.dart';
 
 main() {
-  group('buildEditMatrix', () {
-    test('buildEditMatrix should handle empty lists', () {
+  group('ListEditMatrix', () {
+    test('.buildEditMatrix should handle empty lists', () {
       final oldList = [];
       final newList = [];
       final result = ListEditMatrix.buildEditMatrix(
@@ -14,7 +14,7 @@ main() {
       ]);
     });
 
-    test('buildEditMatrix should handle equal lists', () {
+    test('.buildEditMatrix should handle equal lists', () {
       final oldList = [1, 2, 3];
       final newList = [1, 2, 3];
       final result = _buildEditMatrixForInts(oldList, newList);
@@ -26,7 +26,7 @@ main() {
       ]);
     });
 
-    test('buildEditMatrix should handle adding to lists', () {
+    test('.buildEditMatrix should handle adding to lists', () {
       final oldList = [1, 2];
       final newList = [1, 2, 3];
       final result = _buildEditMatrixForInts(oldList, newList);
@@ -37,7 +37,7 @@ main() {
       ]);
     });
 
-    test('buildEditMatrix should handle removing from lists', () {
+    test('.buildEditMatrix should handle removing from lists', () {
       final oldList = [1, 2, 3, 4];
       final newList = [1, 2, 3];
       final result = _buildEditMatrixForInts(oldList, newList);
@@ -50,7 +50,7 @@ main() {
       ]);
     });
 
-    test('buildEditMatrix should handle replacing items in lists', () {
+    test('.buildEditMatrix should handle replacing items in lists', () {
       final oldList = [1, 2, 3];
       final newList = [1, 4, 3];
       final result = _buildEditMatrixForInts(oldList, newList);
@@ -62,7 +62,7 @@ main() {
       ]);
     });
 
-    test('buildEditMatrix should handle moved items in lists', () {
+    test('.buildEditMatrix should handle moved items in lists', () {
       final oldList = [1, 2, 3];
       final newList = [1, 4, 2];
       final result = _buildEditMatrixForInts(oldList, newList);
@@ -74,7 +74,7 @@ main() {
       ]);
     });
 
-    test('buildEditMatrix should handle objects with custom equals', () {
+    test('.buildEditMatrix should handle objects with custom equals', () {
       final oldList = [
         {'value': 1}
       ];
