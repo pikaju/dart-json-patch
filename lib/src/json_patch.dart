@@ -1,9 +1,11 @@
 import 'dart:convert';
 
 import 'package:collection/collection.dart';
+import 'package:json_patch/src/list_edit_matrix.dart';
 
 import 'error.dart';
 import 'json_pointer.dart';
+import 'list_edit_matrix.dart';
 
 /// Utility class for JSON Patch operations.
 /// Can compare JSON objects or apply patches to an object.
@@ -45,7 +47,7 @@ class JsonPatch {
         ];
       }
 
-      // For primitive types, use the == operator for comparisson and replace if necessary.
+      // For primitive types, use the == operator for comparison and replace if necessary.
       if (oldJson != newJson) {
         return [
           {'op': 'replace', 'path': '', 'value': newJson}
@@ -109,29 +111,87 @@ class JsonPatch {
     return patches;
   }
 
-  static List<Map<String, dynamic>> _listDiff(List oldJson, List newJson) {
-    // Always replace lists if the size changed (not optimal).
-    if (oldJson.length != newJson.length) {
-      return [
-        {'op': 'replace', 'path': '', 'value': newJson}
-      ];
-    } else {
-      final result = <Map<String, dynamic>>[];
-      for (var i = 0; i < oldJson.length; i++) {
-        final elementPatches = diff(oldJson[i], newJson[i]);
-        // Put the list index in front of each path.
-        result.addAll(elementPatches.map((Map<String, dynamic> elementPatch) {
-          final path = elementPatch['path'] as String;
-          final copy = Map<String, dynamic>.from(elementPatch);
-          copy['path'] = JsonPointer.join(
-            JsonPointer.fromSegments([i.toString()]),
-            JsonPointer.fromString(path),
-          ).toString();
-          return copy;
-        }));
-      }
-      return result;
+  static List<Map<String, dynamic>> _listDiff(List oldList, List newList) {
+    final commonPrefixLength = _getCommonPrefix(newList, oldList);
+
+    if (commonPrefixLength == newList.length &&
+        newList.length == oldList.length) {
+      return [];
     }
+
+    final commonSuffixLength =
+        _getCommonPrefix(newList.reversed.toList(), oldList.reversed.toList());
+
+    final oldListTrimmed = oldList.sublist(
+        commonPrefixLength, oldList.length - commonSuffixLength);
+    final newListTrimmed = newList.sublist(
+        commonPrefixLength, newList.length - commonSuffixLength);
+    final editMatrix =
+        ListEditMatrix.buildEditMatrix(oldListTrimmed, newListTrimmed, _equal);
+
+    final result = <Map<String, dynamic>>[];
+
+    var currentX = newListTrimmed.length;
+    var currentY = oldListTrimmed.length;
+    var oldLength = currentY + commonSuffixLength;
+
+    // Reverse through the matrix adding patches to the result where necessary
+    while (currentX > 0 || currentY > 0) {
+      final editType = editMatrix[currentY][currentX];
+      if (editType == EditType.replace) {
+        result.addAll(appendIndexToPath(
+            diff(oldListTrimmed[currentY - 1], newListTrimmed[currentX - 1]),
+            currentY + commonPrefixLength - 1));
+        currentX--;
+        currentY--;
+      } else if (editType == EditType.remove) {
+        result.add(
+            {'op': 'remove', 'path': '/${currentY + commonPrefixLength - 1}'});
+        currentY--;
+      } else if (editType == EditType.add) {
+        result.add({
+          'op': 'add',
+          'path':
+              '/${currentY >= oldLength ? '-' : currentY + commonPrefixLength}',
+          'value': newListTrimmed[currentX - 1]
+        });
+        currentX--;
+        oldLength++;
+      } else {
+        currentX--;
+        currentY--;
+      }
+    }
+
+    return result;
+  }
+
+  static int _getCommonPrefix(List newList, List oldList) {
+    var startInd = 0;
+    final newLen = newList.length;
+    final oldLen = oldList.length;
+    while (startInd < oldLen &&
+        startInd < newLen &&
+        _equal(newList[startInd], oldList[startInd])) {
+      startInd++;
+    }
+    return startInd;
+  }
+
+  static bool _equal(e, Object element) =>
+      DeepCollectionEquality().equals(e, element);
+
+  static Iterable<Map<String, dynamic>> appendIndexToPath(
+      List<Map<String, dynamic>> elementPatches, int index) {
+    return elementPatches.map((Map<String, dynamic> elementPatch) {
+      final path = elementPatch['path'] as String;
+      final copy = Map<String, dynamic>.from(elementPatch);
+      copy['path'] = JsonPointer.join(
+        JsonPointer.fromSegments([index.toString()]),
+        JsonPointer.fromString(path),
+      ).toString();
+      return copy;
+    });
   }
 
   /// Applies JSON Patch operations to a JSON-like object.

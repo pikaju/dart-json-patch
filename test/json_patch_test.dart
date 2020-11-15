@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:test/test.dart';
 import 'package:json_patch/json_patch.dart';
+import 'package:test/test.dart';
 
 void main() {
   group('JsonPatch', () {
@@ -22,13 +22,7 @@ void main() {
         },
       );
       expect(result, hasLength(1));
-      expect(
-          result[0],
-          allOf(
-            containsPair('op', 'add'),
-            containsPair('path', '/object/newKey'),
-            containsPair('value', 'newValue'),
-          ));
+      _checkPatch(result[0], 'add', '/object/newKey', value: 'newValue');
     });
     test('.diff finds replaced values', () {
       var result = JsonPatch.diff(
@@ -40,13 +34,7 @@ void main() {
         },
       );
       expect(result, hasLength(1));
-      expect(
-          result[0],
-          allOf(
-            containsPair('op', 'replace'),
-            containsPair('path', '/object/oldKey'),
-            containsPair('value', 'newValue'),
-          ));
+      _checkPatch(result[0], 'replace', '/object/oldKey', value: 'newValue');
 
       result = JsonPatch.diff(
         {
@@ -57,14 +45,9 @@ void main() {
         },
       );
       expect(result, hasLength(1));
-      expect(
-          result[0],
-          allOf(
-            containsPair('op', 'replace'),
-            containsPair('path', '/object/oldKey'),
-            containsPair('value', true),
-          ));
+      _checkPatch(result[0], 'replace', '/object/oldKey', value: true);
     });
+
     test('.diff finds removed values', () {
       final result = JsonPatch.diff(
         {
@@ -75,24 +58,12 @@ void main() {
         },
       );
       expect(result, hasLength(1));
-      expect(
-          result[0],
-          allOf(
-            containsPair('op', 'remove'),
-            containsPair('path', '/object/oldKey'),
-            isNot(contains('value')),
-          ));
+      _checkPatch(result[0], 'remove', '/object/oldKey');
     });
     test('.diff finds root changes', () {
       final result = JsonPatch.diff(1, 'test');
       expect(result, hasLength(1));
-      expect(
-          result[0],
-          allOf(
-            containsPair('op', 'replace'),
-            containsPair('path', ''),
-            containsPair('value', 'test'),
-          ));
+      _checkPatch(result[0], 'replace', '', value: 'test');
     });
     test('.diff converts special characters properly', () {
       final result = JsonPatch.diff(
@@ -108,6 +79,192 @@ void main() {
         result[0],
         containsPair('path', '/object/new~1key~0with~1special~0characters'),
       );
+    });
+
+    test('.diff finds added values in arrays', () {
+      final oldJson = [0, 1, 4];
+      final newJson = [
+        0,
+        1,
+        2,
+        3,
+        4,
+        {'value': 5},
+        [1, 2, 3]
+      ];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(4));
+      _checkPatch(
+        result[0],
+        'add',
+        '/-',
+        value: [1, 2, 3],
+      );
+      _checkPatch(
+        result[1],
+        'add',
+        '/3',
+        value: {'value': 5},
+      );
+      _checkPatch(result[2], 'add', '/2', value: 3);
+      _checkPatch(result[3], 'add', '/2', value: 2);
+    });
+
+    test('.diff finds values to replace', () {
+      final oldJson = [1];
+      final newJson = [0];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(1));
+      _checkPatch(
+        result[0],
+        'replace',
+        '/0',
+        value: 0,
+      );
+    });
+
+    test('.diff finds removed values in arrays', () {
+      final oldJson = [
+        0,
+        1,
+        2,
+        3,
+        [1, 2, 3],
+        {'value': 5},
+      ];
+      final newJson = [0, 1, 3];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(3));
+      _checkPatch(result[0], 'remove', '/5');
+      _checkPatch(result[1], 'remove', '/4');
+      _checkPatch(result[2], 'remove', '/2');
+    });
+
+    test('.diff finds removed and added values in arrays', () {
+      final oldJson = {
+        'object': {
+          'test': [0, 3, 4]
+        }
+      };
+      final newJson = {
+        'object': {
+          'test': [0, 1, 3]
+        }
+      };
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(2));
+      _checkPatch(result[0], 'remove', '/object/test/2');
+      _checkPatch(result[1], 'add', '/object/test/1', value: 1);
+    });
+
+    test('.diff finds values to replace', () {
+      final oldJson = [
+        {'value': 0},
+        {'value': 1},
+        {'value': 2},
+        {'value': 3}
+      ];
+      final newJson = [
+        {'value': 0},
+        {'value': 1},
+        {'value': 4},
+        {'value': 5}
+      ];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(2));
+      _checkPatch(result[0], 'replace', '/3/value', value: 5);
+      _checkPatch(result[1], 'replace', '/2/value', value: 4);
+    });
+
+    test('.diff of an array handles nested json', () {
+      final oldJson = {
+        'object': {
+          'test': [
+            {'sharedValue': 'sharedValue'},
+            {
+              'changedValue': [1, 2, 3]
+            }
+          ]
+        }
+      };
+      final newJson = {
+        'object': {
+          'test': [
+            {'sharedValue': 'sharedValue'},
+            {
+              'changedValue': [1, 4, 3]
+            },
+          ]
+        }
+      };
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(1));
+      _checkPatch(result[0], 'replace', '/object/test/1/changedValue/1',
+          value: 4);
+    });
+
+    test('.diff should handle different sized lists with no repetitions', () {
+      final oldJson = [1, 2, 3];
+      final newJson = [4, 5, 6, 7];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(4));
+      _checkPatch(result[0], 'add', '/-', value: 7);
+      _checkPatch(result[1], 'replace', '/2', value: 6);
+      _checkPatch(result[2], 'replace', '/1', value: 5);
+      _checkPatch(result[3], 'replace', '/0', value: 4);
+    });
+
+    test('.diff should handle emptyLists', () {
+      final emptyList = [];
+      final otherList = [1];
+      final result = JsonPatch.diff(emptyList, emptyList);
+      expect(result, isEmpty);
+
+      final addResult = JsonPatch.diff(emptyList, otherList);
+      expect(addResult, hasLength(1));
+      _checkPatch(addResult[0], 'add', '/-', value: 1);
+
+      final removeResult = JsonPatch.diff(otherList, emptyList);
+      expect(removeResult, hasLength(1));
+      _checkPatch(removeResult[0], 'remove', '/0');
+    });
+
+    test('.diff should be able to compare maps and lists', () {
+      final oldJson = [
+        1,
+        {'value': 1},
+        [1, 2, 3]
+      ];
+      final newJson = [
+        {'value': 1},
+        [1, 2, 3]
+      ];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(1));
+      _checkPatch(result[0], 'remove', '/0');
+    });
+
+    test('.diff should handle a shared prefix and suffix', () {
+      final oldJson = [1, 2, 3, 4, 5];
+      final newJson = [1, 2, 6, 4, 5];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(1));
+      _checkPatch(result[0], 'replace', '/2', value: 6);
+    });
+
+    test('.diff should handle a removing from a list with a common suffix', () {
+      final oldJson = [1, 2, 3, 4, 5];
+      final newJson = [1, 2, 4, 5];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(1));
+      _checkPatch(result[0], 'remove', '/2');
+    });
+
+    test('.diff should handle a equal lists', () {
+      final oldJson = [1, 2, 3, 4, 5];
+      final newJson = [1, 2, 3, 4, 5];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, isEmpty);
     });
 
     test('.apply works for add operations', () {
@@ -326,4 +483,15 @@ void main() {
       expect(value, isEmpty);
     });
   });
+}
+
+void _checkPatch(Map<String, dynamic> result, String op, String path,
+    {dynamic value = null}) {
+  expect(
+      result,
+      allOf(
+        containsPair('op', op),
+        containsPair('path', path),
+        value != null ? containsPair('value', value) : isNot(contains('value')),
+      ));
 }
