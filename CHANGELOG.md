@@ -1,3 +1,7 @@
+## 2.1.0
+
+* Implement proper list diffing instead of replacing entire lists (thank you to [samabbey-sonocent](https://github.com/samabbey-sonocent)!)
+
 ## 2.0.1
 
 * Fix patch operation parameter sometimes being modified
@@ -19,4 +23,3 @@
 ## 1.0.0
 
 * Initial release
-
