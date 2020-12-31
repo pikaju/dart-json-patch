@@ -119,8 +119,12 @@ class JsonPatch {
       return [];
     }
 
-    final commonSuffixLength =
-        _getCommonPrefix(newList.reversed.toList(), oldList.reversed.toList());
+    final oldListWithoutPrefix = oldList.sublist(commonPrefixLength);
+    final newListWithoutPrefix = newList.sublist(commonPrefixLength);
+
+    final commonSuffixLength = _getCommonPrefix(
+        oldListWithoutPrefix.reversed.toList(),
+        newListWithoutPrefix.reversed.toList());
 
     final oldListTrimmed = oldList.sublist(
         commonPrefixLength, oldList.length - commonSuffixLength);
