@@ -1,3 +1,7 @@
+## 2.1.0+1
+
+* Fix bug in list diffing algorithm (thank you to [joachimvalente](https://github.com/joachimvalente)!)
+
 ## 2.1.0
 
 * Implement proper list diffing instead of replacing entire lists (thank you to [samabbey-sonocent](https://github.com/samabbey-sonocent)!)
