@@ -260,6 +260,14 @@ void main() {
       _checkPatch(result[0], 'remove', '/2');
     });
 
+    test('.diff should handle lists with duplicate elements', () {
+      final oldJson = [6];
+      final newJson = [6, 6];
+      final result = JsonPatch.diff(oldJson, newJson);
+      expect(result, hasLength(1));
+      _checkPatch(result[0], 'add', '/-', value: 6);
+    });
+
     test('.diff should handle a equal lists', () {
       final oldJson = [1, 2, 3, 4, 5];
       final newJson = [1, 2, 3, 4, 5];
