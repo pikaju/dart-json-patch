@@ -3,35 +3,35 @@ import 'error.dart';
 /// Helper class for JSON Pointers.
 /// See https://tools.ietf.org/html/rfc6901 for more information.
 class JsonPointer {
-  const JsonPointer.fromSegments(this.segments) : assert(segments != null);
+  final List<String> segments;
+
+  const JsonPointer.fromSegments(this.segments);
 
   factory JsonPointer.fromString(String pointer) {
-    if (!(pointer.isEmpty || pointer.startsWith('/'))) {
+    if (pointer.isNotEmpty && !pointer.startsWith('/')) {
       throw JsonPatchError('Invalid JSON Pointer: "$pointer".');
     }
 
     return JsonPointer.fromSegments(pointer
         .split('/')
         .skip(1)
-        .map((String segment) => segment
+        .map((segment) => segment
             .replaceAll(RegExp(r'~1'), '/')
             .replaceAll(RegExp(r'~0'), '~'))
         .toList());
   }
 
-  factory JsonPointer.join(JsonPointer lhs, JsonPointer rhs) {
-    return JsonPointer.fromSegments(
-      List.from(lhs.segments)..addAll(rhs.segments),
-    );
-  }
-
-  final List<String> segments;
+  factory JsonPointer.join(JsonPointer lhs, JsonPointer rhs) =>
+      JsonPointer.fromSegments([...lhs.segments, ...rhs.segments]);
 
   bool get isRoot => segments.isEmpty;
   bool get hasParent => !isRoot;
+
   JsonPointer get parent {
     assert(hasParent);
-    return JsonPointer.fromSegments(List.from(segments)..removeLast());
+    return JsonPointer.fromSegments(
+      segments.take(segments.length - 1).toList(),
+    );
   }
 
   /// Returns the value this pointer points to.
@@ -60,12 +60,9 @@ class JsonPointer {
   }
 
   @override
-  String toString() {
-    return segments
-        .map((String segment) => segment
-            .replaceAll(RegExp(r'~'), '~0')
-            .replaceAll(RegExp(r'/'), '~1'))
-        .map((String segment) => '/' + segment)
-        .join();
-  }
+  String toString() => segments
+      .map((segment) =>
+          segment.replaceAll(RegExp(r'~'), '~0').replaceAll(RegExp(r'/'), '~1'))
+      .map((segment) => '/' + segment)
+      .join();
 }

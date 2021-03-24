@@ -130,8 +130,7 @@ class JsonPatch {
         commonPrefixLength, oldList.length - commonSuffixLength);
     final newListTrimmed = newList.sublist(
         commonPrefixLength, newList.length - commonSuffixLength);
-    final editMatrix =
-        ListEditMatrix.buildEditMatrix(oldListTrimmed, newListTrimmed, _equal);
+    final editMatrix = wagnerFischer(oldListTrimmed, newListTrimmed, _equal);
 
     final result = <Map<String, dynamic>>[];
 
@@ -182,8 +181,7 @@ class JsonPatch {
     return startInd;
   }
 
-  static bool _equal(e, Object element) =>
-      DeepCollectionEquality().equals(e, element);
+  static bool _equal(a, b) => DeepCollectionEquality().equals(a, b);
 
   static Iterable<Map<String, dynamic>> appendIndexToPath(
       List<Map<String, dynamic>> elementPatches, int index) {
@@ -213,20 +211,18 @@ class JsonPatch {
   /// Throws a [JsonPatchError] if something goes wrong.
   ///
   /// See https://tools.ietf.org/html/rfc6902 for more information.
-  static dynamic apply(dynamic json, Iterable<Map<String, dynamic>> patches,
-      {bool strict = true}) {
-    try {
-      // Deep copy the input.
-      json = _deepCopy(json);
-      // Apply each patch in order.
-      for (final patch in patches) {
-        json = _applyOne(json, patch, strict);
-      }
-      return json;
-    } catch (e) {
-      if (e is JsonPatchError || e is JsonPatchTestFailedException) rethrow;
-      throw JsonPatchError('An unknown error occurred.');
+  static dynamic apply(
+    dynamic json,
+    Iterable<Map<String, dynamic>> patches, {
+    bool strict = true,
+  }) {
+    // Deep copy the input.
+    json = _deepCopy(json);
+    // Apply each patch in order.
+    for (final patch in patches) {
+      json = _applyOne(json, patch, strict);
     }
+    return json;
   }
 
   static dynamic _deepCopy(dynamic source) {
@@ -238,7 +234,10 @@ class JsonPatch {
   }
 
   static dynamic _applyOne(
-      dynamic json, Map<String, dynamic> patch, bool strict) {
+    dynamic json,
+    Map<String, dynamic> patch,
+    bool strict,
+  ) {
     final op = patch['op'];
 
     // Create fake parent to easily allow changes to the root object.
@@ -298,8 +297,10 @@ class JsonPatch {
     }
   }
 
-  static JsonPointer _extractPath(Map<String, dynamic> patch,
-      [String name = 'path']) {
+  static JsonPointer _extractPath(
+    Map<String, dynamic> patch, [
+    String name = 'path',
+  ]) {
     if (!patch.containsKey(name)) {
       throw JsonPatchError('Patch field "$name" is missing.');
     }

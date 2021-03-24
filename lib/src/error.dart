@@ -1,16 +1,16 @@
 class JsonPatchError extends Error {
-  JsonPatchError(this.message);
+  final String message;
 
-  final Object message;
+  JsonPatchError(this.message);
 
   @override
   String toString() => '$message';
 }
 
 class JsonPatchTestFailedException implements Exception {
-  const JsonPatchTestFailedException(this.message);
-
   final Object message;
+
+  const JsonPatchTestFailedException(this.message);
 
   @override
   String toString() => 'JSON Patch test operation failed: $message';
