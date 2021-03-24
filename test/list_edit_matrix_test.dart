@@ -8,7 +8,7 @@ main() {
       final oldList = [];
       final newList = [];
       final result = ListEditMatrix.buildEditMatrix(
-          oldList, newList, (v1, v2) => v1 == v2);
+          oldList, newList, (dynamic v1, dynamic v2) => v1 == v2);
       expect(result, [
         [EditType.noop]
       ]);
@@ -82,7 +82,7 @@ main() {
         {'value': 1}
       ];
       final result = ListEditMatrix.buildEditMatrix(
-          oldList, newList, (v1, v2) => MapEquality().equals(v1, v2));
+          oldList, newList, (dynamic v1, dynamic v2) => MapEquality().equals(v1, v2));
       expect(result, [
         [EditType.noop, EditType.add],
         [EditType.remove, EditType.noop],
