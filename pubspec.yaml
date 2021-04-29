@@ -1,6 +1,6 @@
 name: json_patch
 description: Pure Dart utility package for the JSON Patch standard. Can apply patch operations as well as perform a diff algorithm on JSON-like objects.
-version: 2.1.0+1
+version: 2.1.1
 homepage: https://github.com/pikaju/dart-json-patch
 
 environment:
