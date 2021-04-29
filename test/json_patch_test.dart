@@ -304,7 +304,7 @@ void main() {
       final result = JsonPatch.apply({
         'a': 5
       }, [
-        {'op': 'copy', 'from': '/a', 'to': '/b'}
+        {'op': 'copy', 'from': '/a', 'path': '/b'}
       ]);
       expect(
           result,
@@ -317,7 +317,7 @@ void main() {
       final result = JsonPatch.apply({
         'a': 5
       }, [
-        {'op': 'move', 'from': '/a', 'to': '/b'}
+        {'op': 'move', 'from': '/a', 'path': '/b'}
       ]);
       expect(
           result,
@@ -381,20 +381,6 @@ void main() {
                 'test': 5
               }, [
                 {'op': 'remove', 'path': '/a'}
-              ]),
-          throwsA(anything));
-      expect(
-          () => JsonPatch.apply({
-                'test': 5
-              }, [
-                {'op': 'move', 'path': '/a', 'to': '/b'}
-              ]),
-          throwsA(anything));
-      expect(
-          () => JsonPatch.apply({
-                'test': 5
-              }, [
-                {'op': 'copy', 'path': '/a', 'to': '/b'}
               ]),
           throwsA(anything));
     });

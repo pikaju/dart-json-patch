@@ -269,14 +269,14 @@ class JsonPatch {
         return fakeParent[fakeChild];
       case 'copy':
         final from = _extractPath(patch, 'from');
-        final to = _extractPath(patch, 'to');
+        final to = _extractPath(patch);
         final fakeTo =
             JsonPointer.join(JsonPointer.fromSegments([fakeChild]), to);
         _addChild(fakeParent, fakeTo, from.traverse(json), strict);
         return fakeParent[fakeChild];
       case 'move':
         final from = _extractPath(patch, 'from');
-        final to = _extractPath(patch, 'to');
+        final to = _extractPath(patch);
         final fakeFrom =
             JsonPointer.join(JsonPointer.fromSegments([fakeChild]), from);
         final fakeTo =
