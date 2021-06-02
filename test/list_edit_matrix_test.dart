@@ -75,14 +75,17 @@ main() {
     });
 
     test('.buildEditMatrix should handle objects with custom equals', () {
-      final oldList = [
+      final List<Map<dynamic, dynamic>> oldList = [
         {'value': 1}
       ];
-      final newList = [
+      final List<Map<dynamic, dynamic>> newList = [
         {'value': 1}
       ];
       final result = ListEditMatrix.buildEditMatrix(
-          oldList, newList, (v1, v2) => MapEquality().equals(v1, v2));
+          oldList,
+          newList,
+          (Map<dynamic, dynamic> v1, Map<dynamic, dynamic> v2) =>
+              MapEquality().equals(v1, v2));
       expect(result, [
         [EditType.noop, EditType.add],
         [EditType.remove, EditType.noop],
