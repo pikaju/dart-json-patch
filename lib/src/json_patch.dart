@@ -131,7 +131,7 @@ class JsonPatch {
     final newListTrimmed = newList.sublist(
         commonPrefixLength, newList.length - commonSuffixLength);
     final editMatrix =
-        ListEditMatrix.buildEditMatrix(oldListTrimmed, newListTrimmed, _equal);
+        ListEditMatrix.buildEditMatrix<dynamic>(oldListTrimmed, newListTrimmed, _equal);
 
     final result = <Map<String, dynamic>>[];
 
@@ -182,7 +182,7 @@ class JsonPatch {
     return startInd;
   }
 
-  static bool _equal(e, Object element) =>
+  static bool _equal(e, dynamic element) =>
       DeepCollectionEquality().equals(e, element);
 
   static Iterable<Map<String, dynamic>> appendIndexToPath(
