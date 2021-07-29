@@ -1,3 +1,7 @@
+## 3.0.0
+
+* Migrate to null-safety (thank you to [justkawal](https://github.com/justkawal)!)
+
 ## 2.1.1
 
 * Fix `copy` and `move` operations using `to` parameter instead of `path` (thank you to [Sam-Ford](https://github.com/Sam-Ford)!)
